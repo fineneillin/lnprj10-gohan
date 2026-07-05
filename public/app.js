@@ -7,7 +7,8 @@ const state = {
   candidates: [], // up to 20, sorted by score
   type: 'all',
   radius: 1000,
-  openNow: false,
+  openNow: true,
+  mode: 'here', // 'here' | 'search'
 }
 
 const $ = (id) => document.getElementById(id)
@@ -73,6 +74,15 @@ function showSpinner(msg) {
   els.status.classList.remove('hidden')
   els.list.innerHTML = ''
 }
+function showEmptyWithButton(msg, btnLabel, onClick) {
+  els.status.innerHTML =
+    `<p>${msg}</p>` +
+    `<button class="btn btn-solid" id="emptyActionBtn" style="margin-top:16px">${btnLabel}</button>`
+  els.status.classList.remove('hidden')
+  els.list.innerHTML = ''
+  const b = document.getElementById('emptyActionBtn')
+  if (b) b.addEventListener('click', onClick)
+}
 
 /* ---------- weighted pick for 換一批 ---------- */
 
@@ -112,6 +122,7 @@ function cardHtml(p) {
 
   return `
     <article class="card" data-id="${p.id}">
+      <span class="card-chevron" aria-hidden="true">›</span>
       ${hero}
       <div class="card-body">
         <div class="card-name">${p.name}</div>
@@ -131,7 +142,19 @@ function cardHtml(p) {
 
 function render(list) {
   if (!list.length) {
-    showStatus('附近找不到，放大半徑或換地點')
+    if (state.openNow) {
+      showEmptyWithButton(
+        '附近營業中的店家找不到——試試關閉「僅營業中」或放大半徑',
+        '關閉「僅營業中」',
+        () => {
+          state.openNow = false
+          els.openNowToggle.checked = false
+          loadNearby()
+        }
+      )
+    } else {
+      showStatus('附近找不到，放大半徑或換地點')
+    }
     return
   }
   hideStatus()
@@ -173,7 +196,7 @@ async function geocodeAndLoad(q) {
     if (!res.ok) throw new Error('geocode')
     const data = await res.json()
     state.coords = { lat: data.lat, lng: data.lng }
-    els.locHint.textContent = `📍 ${data.formattedAddress}`
+    els.locStatusText.textContent = `📌 基準：${data.formattedAddress}`
     await loadNearby()
   } catch {
     showStatus('定位失敗，請稍後再試')
@@ -182,22 +205,50 @@ async function geocodeAndLoad(q) {
 
 function useCurrentLocation() {
   if (!navigator.geolocation) {
-    els.locHint.textContent = '此裝置不支援定位，請手動輸入地點'
+    els.locStatusText.textContent = '此裝置不支援定位，請切換到「輸入地點」'
     return
   }
   showSpinner('取得目前位置…')
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       state.coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
-      els.locHint.textContent = '📍 目前位置'
+      els.locStatusText.textContent = '📍 以你的目前位置為基準'
       loadNearby()
     },
     () => {
-      els.locHint.textContent = '無法取得定位，請在上方輸入地點'
-      showStatus('無法取得定位，請輸入地點後搜尋')
+      els.locStatusText.textContent = '無法取得定位，請切換到「輸入地點」'
+      showStatus('無法取得定位，請切換到「輸入地點」後搜尋')
     },
     { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
   )
+}
+
+/* ---------- location mode + chip helpers ---------- */
+
+function setMode(mode) {
+  state.mode = mode
+  els.locModeSeg.querySelectorAll('button').forEach((b) => {
+    b.classList.toggle('active', b.dataset.mode === mode)
+  })
+  if (mode === 'search') {
+    els.locInputWrap.hidden = false
+    els.locRelocateBtn.hidden = true
+    els.locStatusText.textContent = '輸入地點後按 Enter 定位'
+    els.locInput.focus()
+  } else {
+    els.locInputWrap.hidden = true
+    els.locRelocateBtn.hidden = false
+    useCurrentLocation()
+  }
+}
+
+function selectChip(btn) {
+  els.chipRow.querySelectorAll('.chip').forEach((c) => c.classList.remove('active'))
+  btn.classList.add('active')
+  state.type = btn.dataset.type
+  // keep the selected chip in view within the horizontal scroll row
+  btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  loadNearby()
 }
 
 /* ---------- share (LIFF) ---------- */
@@ -267,25 +318,26 @@ async function share(p) {
 /* ---------- events ---------- */
 
 function bindEvents() {
-  els.locHereBtn.addEventListener('click', useCurrentLocation)
-  els.locSearchBtn.addEventListener('click', () => {
-    const q = els.locInput.value.trim()
-    if (q) geocodeAndLoad(q)
+  els.locModeSeg.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-mode]')
+    if (!btn || btn.dataset.mode === state.mode) return
+    setMode(btn.dataset.mode)
   })
+  els.locRelocateBtn.addEventListener('click', useCurrentLocation)
   els.locInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const q = els.locInput.value.trim()
       if (q) geocodeAndLoad(q)
     }
   })
+  els.locInputIcon.addEventListener('click', () => {
+    const q = els.locInput.value.trim()
+    if (q) geocodeAndLoad(q)
+  })
 
   els.chipRow.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chip')
-    if (!btn) return
-    els.chipRow.querySelectorAll('.chip').forEach((c) => c.classList.remove('active'))
-    btn.classList.add('active')
-    state.type = btn.dataset.type
-    loadNearby()
+    const btn = e.target.closest('.chip[data-type]')
+    if (btn) selectChip(btn)
   })
 
   els.radiusSeg.addEventListener('click', (e) => {
@@ -320,8 +372,10 @@ function bindEvents() {
 /* ---------- boot ---------- */
 
 function cacheEls() {
-  ;['controls', 'locInput', 'locSearchBtn', 'locHereBtn', 'locHint', 'chipRow',
-    'radiusSeg', 'openNowToggle', 'reshuffleBtn', 'statusBox', 'list', 'toast'
+  ;['controls', 'locModeSeg', 'locInputWrap', 'locInput', 'locInputIcon',
+    'locStatus', 'locStatusText', 'locRelocateBtn', 'chipRow',
+    'radiusSeg', 'openNowToggle', 'reshuffleBtn', 'statusBox',
+    'list', 'toast'
   ].forEach((id) => {
     els[id === 'statusBox' ? 'status' : id] = $(id)
   })
@@ -331,6 +385,7 @@ async function boot() {
   cacheEls()
   bindEvents()
   els.controls.hidden = false
+  els.openNowToggle.checked = state.openNow
 
   try {
     await liff.init({ liffId: LIFF_ID })
@@ -338,6 +393,7 @@ async function boot() {
     // LIFF may fail outside LINE (e.g. desktop browser) — app still works
   }
 
+  // default mode: current location
   useCurrentLocation()
 }
 

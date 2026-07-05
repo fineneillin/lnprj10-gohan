@@ -40,7 +40,20 @@ body {
 /* ---------- Header ---------- */
 .app-head {
   padding: 28px 4px 18px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.app-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.app-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: block;
 }
 .app-title {
   font-family: var(--serif);
@@ -48,6 +61,7 @@ body {
   font-size: 26px;
   letter-spacing: .04em;
   color: var(--ink);
+  line-height: 1;
 }
 .app-sub {
   margin-top: 6px;
@@ -61,24 +75,91 @@ body {
 /* ---------- Controls ---------- */
 .controls { margin-bottom: 18px; }
 
-.loc-bar {
+/* Location mode segmented control */
+.loc-mode-seg {
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 4px;
+  padding: 4px;
+  background: #EFE6D6;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.loc-mode-seg button {
+  flex: 1;
+  min-height: 40px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--sub-2);
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.loc-mode-seg button.active {
+  background: var(--akane);
+  color: #fff;
+}
+
+/* Location input (search mode only) */
+.loc-input-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+.loc-input-wrap[hidden] { display: none; }
+.loc-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: var(--faint);
+  pointer-events: none;
 }
 .loc-input {
-  flex: 1;
+  width: 100%;
   min-height: 44px;
   border: 1px solid var(--hairline-2);
   border-radius: 10px;
   background: var(--card);
-  padding: 0 14px;
+  padding: 0 14px 0 40px;
   font-family: var(--sans);
   font-size: 15px;
   color: var(--ink);
 }
 .loc-input::placeholder { color: var(--faint); }
 .loc-input:focus { outline: none; border-color: var(--akane); }
+
+/* Location status bar */
+.loc-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 14px;
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.loc-status-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--sub-2);
+  line-height: 1.4;
+}
+.loc-status-action {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--akane);
+  font-family: var(--sans);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+.loc-status-action:hover { color: var(--akane-deep); }
+.loc-status-action[hidden] { display: none; }
 
 .btn {
   min-height: 44px;
@@ -109,14 +190,26 @@ body {
   min-height: 16px;
 }
 
-/* Chips */
+/* Chips — single-line horizontal scroll */
 .chip-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  scroll-snap-type: x proximity;
+  /* bleed to viewport edges so chips can scroll under the padding */
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
 }
+.chip-row::-webkit-scrollbar { display: none; } /* WebKit */
 .chip {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
   min-height: 36px;
   padding: 0 14px;
   border-radius: 999px;
@@ -124,6 +217,7 @@ body {
   background: var(--card);
   color: var(--sub-2);
   font-size: 13px;
+  white-space: nowrap;
   cursor: pointer;
   transition: all .15s;
 }
@@ -212,10 +306,31 @@ body {
 .list { display: flex; flex-direction: column; gap: 16px; }
 
 .card {
+  position: relative;
   background: var(--card);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   overflow: hidden;
+}
+.card-chevron {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .9);
+  color: var(--akane);
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 500;
+  box-shadow: 0 1px 4px rgba(43, 38, 33, .12);
+  pointer-events: none;
 }
 .card-photo {
   width: 100%;

@@ -2,12 +2,24 @@ import type { NearbyQuery, NearbyResult } from './types'
 
 // chip → Places (New) includedTypes
 export const TYPE_MAP: Record<string, string[]> = {
+  // primary row
   all: ['restaurant'],
   japanese: ['japanese_restaurant', 'sushi_restaurant', 'ramen_restaurant'],
-  western: ['italian_restaurant', 'french_restaurant', 'american_restaurant', 'steak_house'],
+  korean: ['korean_restaurant'],
   chinese: ['chinese_restaurant'],
+  vegetarian: ['vegetarian_restaurant', 'vegan_restaurant'],
   cafe: ['cafe', 'coffee_shop'],
-  dessert: ['dessert_shop', 'bakery'],
+  // "more" row
+  western: ['italian_restaurant', 'french_restaurant', 'american_restaurant', 'steak_house'],
+  thai: ['thai_restaurant'],
+  vietnamese: ['vietnamese_restaurant'],
+  indian: ['indian_restaurant'],
+  bbq: ['barbecue_restaurant'],
+  seafood: ['seafood_restaurant'],
+  brunch: ['breakfast_restaurant', 'brunch_restaurant'],
+  dessert: ['dessert_shop', 'bakery', 'ice_cream_shop'],
+  bar: ['bar'],
+  fastfood: ['fast_food_restaurant', 'hamburger_restaurant', 'pizza_restaurant'],
 }
 
 const FIELD_MASK = [
@@ -26,6 +38,9 @@ const FIELD_MASK = [
 // Bayesian confidence constant / assumed global mean rating
 const C = 50
 const G = 3.8
+// Distance decay coefficient: higher = distance matters more.
+// v1 used 1 (aggressive); v1.1 softens to 0.4. Drop to 0.3 to weaken distance further.
+const DISTANCE_DECAY_K = 0.4
 
 export function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371 // km
@@ -47,7 +62,7 @@ export function computeScore(
   const r = rating ?? G
   const n = count ?? 0
   const bayes = (n * r + C * G) / (n + C)
-  const decay = 1 / (1 + distanceMeters / 1000)
+  const decay = 1 / (1 + DISTANCE_DECAY_K * (distanceMeters / 1000))
   return Math.round(bayes * decay * 100) / 100
 }
 
