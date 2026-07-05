@@ -1,0 +1,13 @@
+name = "lnprj10-gohan"
+main = "src/index.ts"
+compatibility_date = "2026-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[vars]
+ENVIRONMENT = "production"
+
+# Secret (do not commit): wrangler secret put GOOGLE_MAPS_API_KEY

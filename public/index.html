@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>今日のごはん · LNPRJ10</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500&family=Space+Mono&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="app-head">
+    <div class="app-title">今日のごはん</div>
+    <div class="app-sub">LNPRJ10 · 附近吃什麼</div>
+  </header>
+
+  <section class="controls" id="controls" hidden>
+    <div class="loc-bar">
+      <input class="loc-input" id="locInput" type="text"
+        placeholder="輸入地點（如 台北101、中山站）" inputmode="search" />
+      <button class="btn btn-ghost" id="locSearchBtn">搜尋</button>
+      <button class="btn btn-solid" id="locHereBtn" title="使用目前位置">現在地</button>
+    </div>
+    <div class="loc-hint" id="locHint"></div>
+
+    <div class="chip-row" id="chipRow">
+      <button class="chip active" data-type="all">全部</button>
+      <button class="chip" data-type="japanese">日式</button>
+      <button class="chip" data-type="western">西式</button>
+      <button class="chip" data-type="chinese">中式</button>
+      <button class="chip" data-type="cafe">咖啡</button>
+      <button class="chip" data-type="dessert">甜點</button>
+    </div>
+
+    <div class="filter-row">
+      <div class="seg" id="radiusSeg">
+        <button data-radius="500">500m</button>
+        <button data-radius="1000" class="active">1km</button>
+        <button data-radius="3000">3km</button>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="openNowToggle" />
+        <span class="track"></span>
+        <span>僅營業中</span>
+      </label>
+      <button class="btn btn-ghost" id="reshuffleBtn" style="margin-left:auto">換一批</button>
+    </div>
+  </section>
+
+  <div class="status hidden" id="statusBox"></div>
+
+  <main class="list" id="list"></main>
+
+  <p class="disclaimer">資料來自 Google · 評分僅供參考</p>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="/app.js"></script>
+  <script src="https://lnprj.neillin-lct.workers.dev/lnprj-nav.js"></script>
+  <script>
+    if (window.LNPRJ) LNPRJ.init({ current: 10, basePath: '../../' });
+  </script>
+</body>
+</html>
