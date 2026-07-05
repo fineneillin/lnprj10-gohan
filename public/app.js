@@ -53,6 +53,26 @@ function navUrl(p) {
   return `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&destination_place_id=${placeId}`
 }
 
+// Open a URL in LIFF's in-app external browser; fall back to a new tab
+// (window.open) when running outside LINE.
+function openExternal(url) {
+  try {
+    if (window.liff && liff.openWindow) {
+      liff.openWindow({ url, external: true })
+      return
+    }
+  } catch (e) {
+    // fall through to window.open
+  }
+  window.open(url, '_blank')
+}
+
+// Whole-card tap → the place's Google Maps page (falls back to directions
+// if the Worker didn't return a mapsUri).
+function openMaps(p) {
+  openExternal(p.mapsUri || navUrl(p))
+}
+
 let toastTimer
 function toast(msg) {
   els.toast.textContent = msg
@@ -359,13 +379,19 @@ function bindEvents() {
   })
 
   els.list.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-act]')
-    if (!btn) return
     const card = e.target.closest('.card')
+    if (!card) return
     const p = state.candidates.find((x) => x.id === card.dataset.id)
     if (!p) return
-    if (btn.dataset.act === 'nav') window.open(navUrl(p), '_blank')
-    else if (btn.dataset.act === 'share') share(p)
+    // Footer buttons take precedence over the whole-card tap.
+    const btn = e.target.closest('button[data-act]')
+    if (btn) {
+      if (btn.dataset.act === 'nav') openExternal(navUrl(p))
+      else if (btn.dataset.act === 'share') share(p)
+      return
+    }
+    // Whole-card tap → open the place on Google Maps.
+    openMaps(p)
   })
 }
 

@@ -311,6 +311,7 @@ body {
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   overflow: hidden;
+  cursor: pointer;
 }
 .card-chevron {
   position: absolute;

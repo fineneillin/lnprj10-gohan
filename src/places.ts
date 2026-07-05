@@ -32,6 +32,7 @@ const FIELD_MASK = [
   'places.priceLevel',
   'places.currentOpeningHours.openNow',
   'places.primaryTypeDisplayName',
+  'places.googleMapsUri',
   'places.photos',
 ].join(',')
 
@@ -76,6 +77,7 @@ interface GooglePlace {
   formattedAddress?: string
   currentOpeningHours?: { openNow?: boolean }
   primaryTypeDisplayName?: { text?: string }
+  googleMapsUri?: string
   photos?: { name?: string }[]
 }
 
@@ -125,6 +127,7 @@ export async function searchNearby(key: string, q: NearbyQuery): Promise<NearbyR
       lng,
       openNow: p.currentOpeningHours?.openNow ?? null,
       distanceMeters,
+      mapsUri: p.googleMapsUri ?? null,
       photoName: p.photos?.[0]?.name ?? null,
       score: computeScore(rating, userRatingCount, distanceMeters),
     }

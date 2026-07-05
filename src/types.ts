@@ -15,6 +15,7 @@ export interface NearbyResult {
   lng: number
   openNow: boolean | null
   distanceMeters: number
+  mapsUri: string | null
   photoName: string | null
   score: number
 }
